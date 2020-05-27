@@ -7,7 +7,7 @@
 (function($) {
 
      $.fn.digitScroller = function(opts) {
-
+ 
           var $this = $(this),
                opts = $.extend({}, {
                     "scrollTo": 0,
@@ -16,13 +16,13 @@
                scrollerContent = $this.html() == "" ? "0" : $this.html(),
                scrolling = false,
                digitScrollEventTimer;
-
-
+ 
+ 
           this.init = function() {
                this.initDom();
                return this;
           }
-
+ 
           this.getCurrentValue = function() {
                var currentValueString = 0;
                $this.find('.__digit_scroller_digit').each(function() {
@@ -30,7 +30,7 @@
                });
                return parseInt(this.removeFrontZeros(currentValueString));
           }
-
+ 
           /**
           * Method to go to top with animation
           */
@@ -39,42 +39,42 @@
                .css("transition", "transform " + opts.scrollDuration + "ms ease")
                .addClass("_digit_up");
           }
-
+ 
           /**
           * Method to set next values to current values
           */
           this.setNextNumberToCurrent = function() {
-
+ 
                // setting next to current
                $this.find('.__digit_scroller_digit').each(function() {
                     $(this).find(".__digit_scroller_current_digit").html($(this).find(".__digit_scroller_next_digit").html());
                });
-
+ 
                // move current to show it and next to bottom without animating it
                $this.find(".__digit_scroller_digit")
                .css("transition", "transform 0ms ease 0s")
                .removeClass('_digit_up');
-
+ 
                return true;
           }
-
-
-
+ 
+ 
+ 
           /**
           * Method to update next values
           */
           this.updateNextValue = function(newValue) {
-
+ 
                var _this = this,
                     count = 0;
-
+ 
                newValue = this.addZeros(newValue, scrollerContent.length);
-
+ 
                // create digit
                for (i=$this.find(".__digit_scroller_digit").length;i<newValue.length;i++) {
                     $this.append(this.cunstuctDigit('0'));
                }
-
+ 
                $this.find('.__digit_scroller_digit').each(function() {
                     // change if need to change
                     if ($(this).find(".__digit_scroller_next_digit").html() != newValue.charAt(count)) {
@@ -83,10 +83,10 @@
                     }
                     count++;
                });
-
+ 
                setTimeout(this.setNextNumberToCurrent, opts.scrollDuration-25);
           }
-
+ 
           this.addZeros = function(number, length) {
                number = String(number);
                if (number.length >= length) return number;
@@ -95,32 +95,32 @@
                }
                return number;
           }
-
+ 
           this.removeFrontZeros = function(currentValueString) {
                // return if number is negative
                if (!currentValueString.includes("-")) {
                     return currentValueString;
                }
-
+ 
                return currentValueString.replace(new RegExp("^[0]*"), '');
           }
-
+ 
           /**
           * Method to format digitScroller
           */
           this.initDom = function() {
                if ($this.hasClass("__digit_scroller_wrap")) return false;
-
+ 
                $this.addClass("__digit_scroller_wrap");
                $this.html(""); // clear element wrap content.
-
+ 
                for (var i = 0; i < scrollerContent.length; i++) {
                     $this.append(this.cunstuctDigit(scrollerContent[i]));
                }
-
+ 
                return true;
           }
-
+ 
           /**
           * Method to cunstruct stracture for a digit
           */
@@ -137,48 +137,49 @@
                          "html": num
                     }));
           }
-
-
+ 
+ 
           /**
           * Core method that controls when to update digits
           */
-          this.coreScroll = function() {
+          this.coreScroll = function(callback) {
                var currentValue = this.getCurrentValue();
-
+ 
                if (currentValue == opts.scrollTo) {
                     scrolling = false;
                     clearInterval(digitScrollEventTimer) // clear interval
+                    callback();
                     return;
                }
-
+ 
                if (opts.scrollTo > currentValue) {
                     currentValue++;
                } else {
                     currentValue--;
                }
-
+ 
                this.updateNextValue(currentValue);
           }
-
-
+ 
+ 
           // public methods
-
+ 
           /**
           * Method to scroll to a number
           */
-          this.scrollTo = function(number) {
+          this.scrollTo = function(number, callback) {
                if (!scrolling) {
                     var _this = this;
                     scrolling = true;
                     opts.scrollTo = number;
                     this.coreScroll();
                     digitScrollEventTimer = setInterval(function() {
-                         _this.coreScroll();
+                         _this.coreScroll(callback);
                     }, opts.scrollDuration);
                }
                return this;
           }
-
+ 
           /**
           * Method to jump to directly to a number
           */
@@ -186,7 +187,7 @@
                this.updateNextValue(value);
                return this;
           }
-
+ 
           /**
           * Method to change scroll duration animation
           */
@@ -194,9 +195,14 @@
                opts.scrollDuration = durration;
                return this;
           }
-
+ 
+          this.scrolling = function() {
+               return scrolling;
+          }
+ 
           return this.init();
      }
-
-
-})(jQuery);
+ 
+ 
+ })(jQuery);
+ 
