@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Raffle</title>
+    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1, minimum-scale=1">
+	<link rel="icon" href="img/icon.ico">
+	<!-- Icon from Twitter Twemoji (https://twemoji.twitter.com/) -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+
+<style>
+body {
+	font-family: Lato, Verdana, Geneva, Tahoma, Arial, Helvetica, sans-serif;
+	color: gray;
+	background-color: #fbfbfb;
+	text-align: center;
+}
+.jumbotron {
+	background-color: #FF9365;
+}
+.jumbotron h1 {
+	font-family: Jaapokki, "Trebuchet MS", Arial, sans-serif;
+	color: white;
+	text-shadow: -4px 6px 0px black;
+	letter-spacing: -4px;
+	font-size: 8rem;
+}
+.letter {
+  display: inline-block;
+  position: relative;
+  transform: translateZ(25px);
+  transform-origin: 50% 50% 25px;
+  letter-spacing: -20px;
+}
+.letter.out {
+  transform: rotateX(90deg);
+  transition: transform 0.32s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+.letter.behind {
+  transform: rotateX(-90deg);
+}
+.letter.in {
+  transform: rotateX(0deg);
+  transition: transform 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.counter {
+	margin-top: 50px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+	font-size: 10rem;
+}
+#ping {
+	background-color: gray;
+	height: 10px;
+	width: 10px;
+	border-radius: 5px;
+	text-align: center;
+	transform: translateY(5px);
+    transform-origin: 50% 50%;
+}
+</style>
+
+<body>
+    <div class="jumbotron text-center" style="background-color: #FF9365;">
+        <h1 class="title">
+			<span class="letter">R</span>
+			<span class="letter">a</span>
+			<span class="letter">f</span>
+			<span class="letter" style="margin-left: -5px">f</span>
+			<span class="letter">l</span>
+			<span class="letter">e</span>
+		</h1>
+    </div>
+	<div class="row" style="width: fit-content; margin-left: auto; margin-right: auto;">
+		<span id="ping" style="float: left; margin: 3px"></span>
+		<span id="status" style="float: right; margin: 3px">NOT CONNECTED</span>
+	</div>
+
+	<div class="counter" style="font-size: 72px;">----</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" crossorigin="anonymous"></script>
+	<script src="util/jquery.confetti.js"></script>
+	<link rel="stylesheet" href="util/jquery.digitScroller.css">
+	<script src="util/jquery.digitScroller.js"></script>
+</body>
+
+<script>
+	var scroller = $(".counter").digitScroller();
+	async function scroll(number) {
+		var current = number;
+		var past = 0;
+
+		$(document)
+		.queue(function(next) {
+			past = 0;
+			current = number-100;
+			scroller.scrollDuration(5);
+			scroller.scrollTo(current, next);
+		})
+		.queue(function(next) {
+			past = current;
+			current = number-20;
+			scroller.scrollDuration(20);
+			scroller.scrollTo(current, next);
+		})
+		.queue(function(next) {
+			past = current;
+			current = number-3;
+			scroller.scrollDuration(600);
+			scroller.scrollTo(current, next);
+		})
+		.queue(function(next) {
+			past = current;
+			current = number;
+			scroller.scrollDuration(1500);
+			scroller.scrollTo(current, next);
+		})
+		.queue(function(next) {
+			if (!Math.round(Math.random())) {
+				past = current;
+				current = number+1;
+				scroller.scrollDuration(3000);
+				scroller.scrollTo(current, next);
+			}
+			else {
+				next();
+			}
+		})
+		.queue(function(next) {
+			scroller.jumpTo(number);
+			setTimeout(function() {
+				$.confetti.start();
+			}, 1000);
+		});
+	}
+</script>
+
+<script>
+var socket = io.connect('http://x.x.x.x:4000', {secure: true});
+socket.on('connect', function() {
+	$("#ping").css('background-color', 'limegreen');
+	$('#status').html("CONNECTED");
+});
+socket.on('message', msg => {
+	console.log(msg);
+});
+socket.on('raffle', num => {
+	scroll(num);
+});
+socket.on('reset', data => {
+	location.reload();
+});
+socket.on('disconnect', function() {
+	$("#ping").css('background-color', 'gray');
+	$('#status').html("NOT CONNECTED");
+});
+</script>
+
+<script>
+function changeWord(letters) {
+	var cw = letters;
+	var nw = letters;
+	for (var i = 0; i < cw.length; i++) {
+		animateLetterOut(cw, i);
+	}
+
+	for (var i = 0; i < nw.length; i++) {
+		nw[i].className = 'letter behind';
+		nw[0].parentElement.style.opacity = 1;
+		animateLetterIn(nw, i);
+	}
+}
+function animateLetterOut(cw, i) {
+	setTimeout(function() {
+		cw[i].className = 'letter out';
+	}, (i*80));
+}
+function animateLetterIn(nw, i) {
+	setTimeout(function() {
+		nw[i].className = 'letter in';
+	}, 340+(i*80));
+}
+
+$('.title').css('opacity', 0);
+colors = ['#FF9365', '#10c176', '#5d05e8', '#68b2d4', '#9feb55', '#7241ab', '#fcc1db', '#b8b9a4', '#64d750', '#f28a2c', '#f8512b', '#5d5cad', '#7fcfa9', '#db3154', '#3e60db', '#385235', '#f1d45f', '#d65ab1', '#2d5762', '#b59eef', '#ff313e', '#e2ba6a', '#918685', '#2e0301', '#8d3c32'];
+var index = 0;
+
+function update() {
+	changeWord(document.getElementsByClassName('letter'));
+	$('.jumbotron').css('background-color', colors[index]);
+	index++;
+	if (index == colors.length) {
+		index = 0;
+	}
+}
+
+update()
+setInterval(update, 5000);
+</script>
+</html>
